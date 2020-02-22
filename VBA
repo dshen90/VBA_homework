@@ -1,0 +1,96 @@
+Sub stockData()
+
+' Initiate Stock Volume Table and Greatest Table
+Cells(1, 9).Value = "Ticker"
+Cells(1, 10).Value = "Yearly Change"
+Cells(1, 11).Value = "Percent Change"
+Cells(1, 12).Value = "Total Stock Volume"
+Cells(1, 16).Value = "Ticker"
+Cells(1, 17).Value = "Value"
+Cells(2, 15).Value = "Greatest % Increase"
+Cells(3, 15).Value = "Greatest % Decrease"
+Cells(4, 15).Value = "Greatest Total Volume"
+Range("Q2:Q4").Value = 0
+Cells(2, 16).NumberFormat = "0.00%"
+Cells(3, 16).NumberFormat = "0.00%"
+
+' Declaring variables
+Dim totalStock, numRows As Long
+Dim newTicker As Boolean
+Dim tickerCount As Integer
+Dim openingPrice, closingPrice As Double
+Dim WS As Worksheet
+
+For Each WS In Worksheets
+    WS.Select
+    
+    ' Initializing variables
+    newTicker = True
+    openingPrice = 0
+    closingPrice = 0
+    tickerCount = 0
+    totalStock = 0
+    
+    ' Get number of rows of data
+    numRows = Range("A2", Range("A2").End(xlDown)).Rows.Count + 1
+    MsgBox (numRows)
+    
+    ' Summarizing Yearly Change, Percent Change, and Total Stock Volume
+    For I = 2 To numRows
+        temp = Cells(I, 1).Value
+        tempNext = Cells(I + 1, 1).Value
+        
+        ' if newTicker is TRUE, add new Ticker to the Summary Board, get opening price of the year, and restart totalStock
+        If newTicker = True Then
+            Cells(tickerCount + 2, 9).Value = temp
+            totalStock = Cells(I, 7).Value
+            openingPrice = Cells(I, 3).Value
+            newTicker = False
+        
+        ' if the next ticker is different from the current ticker, start calculations for current ticker's summary
+        ElseIf temp <> tempNext Or IsEmpty(tempNext) = True Then
+            totalStock = totalStock + Cells(I, 7).Value
+            closingPrice = Cells(I, 6).Value
+            
+            ' Fill Summary Board
+            Cells(tickerCount + 2, 10).Value = (closingPrice - openingPrice)
+            If Cells(tickerCount + 2, 10).Value >= 0 Then
+                Cells(tickerCount + 2, 10).Interior.ColorIndex = 4
+            Else
+                Cells(tickerCount + 2, 10).Interior.ColorIndex = 3
+            End If
+                ' Since doing a division, must always check if denominator is zero.
+            If openingPrice <> 0 Then
+                Cells(tickerCount + 2, 11).Value = (closingPrice - openingPrice) / openingPrice
+            Else
+                Cells(tickerCount + 2, 11).Value = 0
+            End If
+            Cells(tickerCount + 2, 11).NumberFormat = "0.00%"
+            Cells(tickerCount + 2, 12).Value = totalStock
+            
+            ' Fill Greatest Board
+                ' Greatest Percent Increase and Decrease Check
+            If Cells(tickerCount + 2, 11).Value > Cells(2, 17).Value Then
+                Cells(2, 16).Value = Cells(tickerCount + 2, 9).Value
+                Cells(2, 17).Value = Cells(tickerCount + 2, 11).Value
+            ElseIf Cells(tickerCount + 2, 11).Value < Cells(3, 17).Value Then
+                Cells(3, 16).Value = Cells(tickerCount + 2, 9).Value
+                Cells(3, 17).Value = Cells(tickerCount + 2, 11).Value
+            End If
+                ' Greatest Total Stock Volume Check
+            If Cells(tickerCount + 2, 12).Value > Cells(4, 17).Value Then
+                Cells(4, 16).Value = Cells(tickerCount + 2, 9).Value
+                Cells(4, 17).Value = Cells(tickerCount + 2, 12).Value
+            End If
+            
+            ' Increment tickerCounter and set newTicker back to True to indicate a new Ticker is next
+            tickerCount = tickerCount + 1
+            newTicker = True
+        Else
+            ' Add Total Stock Volume for current ticker
+            totalStock = totalStock + Cells(I, 7).Value
+        End If
+    Next I
+Next
+
+End Sub
